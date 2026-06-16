@@ -13,7 +13,7 @@ interface FishProps {
 
 const Fish: React.FC<FishProps> = ({ position, color, scale, speed, behavior }) => {
   const groupRef = useRef<THREE.Group>(null);
-  const tailRef = useRef<THREE.Mesh>(null);
+  const tailRef = useRef<THREE.Group>(null);
   const startTime = useRef(Math.random() * 100);
   const phaseOffset = useRef(Math.random() * Math.PI * 2);
   const yWobble = useRef(Math.random() * 0.5);
