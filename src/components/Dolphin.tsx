@@ -1,15 +1,17 @@
 import React, { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
+import { BehaviorConfig } from '../data/creatures';
 
 interface DolphinProps {
   position: [number, number, number];
   color: string;
   scale: number;
   speed: number;
+  behavior: BehaviorConfig;
 }
 
-const Dolphin: React.FC<DolphinProps> = ({ position, color, scale, speed }) => {
+const Dolphin: React.FC<DolphinProps> = ({ position, color, scale, speed, behavior }) => {
   const groupRef = useRef<THREE.Group>(null);
   const tailRef = useRef<THREE.Group>(null);
   const startTime = useRef(Math.random() * 100);

@@ -1,15 +1,17 @@
 import React, { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
+import { BehaviorConfig } from '../data/creatures';
 
 interface JellyfishProps {
   position: [number, number, number];
   color: string;
   scale: number;
   speed: number;
+  behavior: BehaviorConfig;
 }
 
-const Jellyfish: React.FC<JellyfishProps> = ({ position, color, scale, speed }) => {
+const Jellyfish: React.FC<JellyfishProps> = ({ position, color, scale, speed, behavior }) => {
   const groupRef = useRef<THREE.Group>(null);
   const tentaclesRef = useRef<THREE.Mesh[]>([]);
   const startTime = useRef(Math.random() * 100);

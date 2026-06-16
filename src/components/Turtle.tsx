@@ -1,15 +1,17 @@
-import React, { useRef } from 'react';
+import React, { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
+import { BehaviorConfig } from '../data/creatures';
 
 interface TurtleProps {
   position: [number, number, number];
   color: string;
   scale: number;
   speed: number;
+  behavior: BehaviorConfig;
 }
 
-const Turtle: React.FC<TurtleProps> = ({ position, color, scale, speed }) => {
+const Turtle: React.FC<TurtleProps> = ({ position, color, scale, speed, behavior }) => {
   const groupRef = useRef<THREE.Group>(null);
   const flippersRef = useRef<THREE.Group[]>([]);
   const startTime = useRef(Math.random() * 100);
@@ -17,26 +19,62 @@ const Turtle: React.FC<TurtleProps> = ({ position, color, scale, speed }) => {
   const orbitR = useRef(5 + Math.random() * 4);
   const phase = useRef(Math.random() * Math.PI * 2);
 
+  const minDepth = behavior.minDepth ?? -20;
+  const maxDepth = behavior.maxDepth ?? -3;
+  const diveDuration = behavior.diveDuration ?? 15;
+  const surfaceDuration = behavior.surfaceDuration ?? 3;
+  const cycleDuration = diveDuration + surfaceDuration + 6;
+
+  const computeDepth = (t: number): number => {
+    const cyclePos = (t % cycleDuration + cycleDuration) % cycleDuration;
+
+    if (cyclePos < 3) {
+      const k = cyclePos / 3;
+      const eased = 1 - Math.cos(k * Math.PI / 2);
+      return minDepth + (maxDepth - minDepth) * eased;
+    } else if (cyclePos < 3 + surfaceDuration) {
+      return maxDepth + Math.sin(cyclePos * 2) * 0.3;
+    } else if (cyclePos < 6 + surfaceDuration) {
+      const k = (cyclePos - 3 - surfaceDuration) / 3;
+      const eased = Math.sin(k * Math.PI / 2);
+      return maxDepth + (minDepth - maxDepth) * eased;
+    } else {
+      const k = (cyclePos - 6 - surfaceDuration) / diveDuration;
+      return minDepth + Math.sin(k * Math.PI * 1.5) * 2;
+    }
+  };
+
   useFrame((state) => {
     if (!groupRef.current) return;
     const t = state.clock.elapsedTime * speed * 0.15 + startTime.current;
     const r = orbitR.current;
     const p = phase.current;
 
-    const x = center.current.x + Math.cos(t * 0.25 + p) * r;
-    const z = center.current.z + Math.sin(t * 0.25 + p) * r;
-    const y = center.current.y + Math.sin(t * 0.4) * 1;
+    let x, z, y;
+
+    if (behavior.type === 'surface-breathing') {
+      x = center.current.x + Math.cos(t * 0.2 + p) * r;
+      z = center.current.z + Math.sin(t * 0.2 + p) * r * 0.8;
+      y = computeDepth(state.clock.elapsedTime * speed * 0.3 + startTime.current);
+    } else {
+      x = center.current.x + Math.cos(t * 0.25 + p) * r;
+      z = center.current.z + Math.sin(t * 0.25 + p) * r;
+      y = center.current.y + Math.sin(t * 0.4) * 1;
+    }
 
     groupRef.current.position.set(x, y, z);
-    const dx = -Math.sin(t * 0.25 + p) * r * 0.25;
-    const dz = Math.cos(t * 0.25 + p) * r * 0.25;
+
+    const angSpeed = behavior.type === 'surface-breathing' ? 0.2 : 0.25;
+    const dx = -Math.sin(t * angSpeed + p) * r * angSpeed;
+    const dz = Math.cos(t * angSpeed + p) * r * angSpeed;
     groupRef.current.rotation.y = Math.atan2(dx, dz);
 
-    /* flippers */
+    const flipperSpeed = behavior.type === 'surface-breathing' ? 1.5 : 2;
+    const flipperAmp = behavior.type === 'surface-breathing' ? 0.6 : 0.5;
     flippersRef.current.forEach((flipper, i) => {
       if (flipper) {
         const dir = i < 2 ? 1 : -1;
-        flipper.rotation.x = Math.sin(t * 2) * 0.5 * dir;
+        flipper.rotation.x = Math.sin(t * flipperSpeed) * flipperAmp * dir;
       }
     });
   });

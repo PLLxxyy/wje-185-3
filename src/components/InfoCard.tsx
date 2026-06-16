@@ -8,6 +8,8 @@ interface InfoCardData {
   diet?: string;
   behavior?: string;
   protectionLevel?: string;
+  currentState?: string;
+  currentStateDesc?: string;
 }
 
 interface InfoCardProps {
@@ -36,6 +38,17 @@ const InfoCard: React.FC<InfoCardProps> = ({ data, onClose }) => {
           </button>
         </div>
         <div className="card-body">
+          {data.currentState && (
+            <div className="card-row card-state-row">
+              <div className="card-label">当前状态</div>
+              <div className="card-value">
+                <span className="card-state-tag">{data.currentState}</span>
+                {data.currentStateDesc && (
+                  <div className="card-state-desc">{data.currentStateDesc}</div>
+                )}
+              </div>
+            </div>
+          )}
           {data.description && (
             <div className="card-row">
               <div className="card-label">介绍</div>

@@ -1,3 +1,14 @@
+export type BehaviorType =
+  | 'deep-cruise'
+  | 'coral-circling'
+  | 'surface-breathing'
+  | 'default';
+
+export interface BehaviorState {
+  state: string;
+  description: string;
+}
+
 export interface CreatureInfo {
   name: string;
   bodySize: string;
@@ -5,6 +16,16 @@ export interface CreatureInfo {
   diet: string;
   behavior: string;
   protectionLevel: '无危' | '近危' | '易危' | '濒危' | '极危';
+}
+
+export interface BehaviorConfig {
+  type: BehaviorType;
+  coralId?: string;
+  orbitRadius?: number;
+  minDepth?: number;
+  maxDepth?: number;
+  diveDuration?: number;
+  surfaceDuration?: number;
 }
 
 export interface CreatureData {
@@ -15,7 +36,45 @@ export interface CreatureData {
   scale: number;
   speed: number;
   info: CreatureInfo;
+  behavior: BehaviorConfig;
 }
+
+export const getBehaviorState = (
+  behaviorType: BehaviorType,
+  elapsedTime: number,
+  speed: number
+): BehaviorState => {
+  const t = elapsedTime * speed * 0.2;
+  switch (behaviorType) {
+    case 'deep-cruise': {
+      const phase = t % 20;
+      if (phase < 12) {
+        return { state: '深水巡游', description: '正在深海区域缓慢游弋觅食' };
+      } else if (phase < 16) {
+        return { state: '缓慢下潜', description: '向下巡游，寻找猎物踪迹' };
+      } else {
+        return { state: '稳步上升', description: '调整深度，继续巡弋航线' };
+      }
+    }
+    case 'coral-circling': {
+      return { state: '绕珊瑚游动', description: '围绕珊瑚礁游动，寻找食物与庇护' };
+    }
+    case 'surface-breathing': {
+      const cycle = t % 25;
+      if (cycle < 4) {
+        return { state: '水面换气', description: '浮出水面，呼吸新鲜空气' };
+      } else if (cycle < 9) {
+        return { state: '缓慢下潜', description: '吸足空气后，缓缓潜入水中' };
+      } else if (cycle < 20) {
+        return { state: '海底觅食', description: '在海床附近游动，寻找海藻与食物' };
+      } else {
+        return { state: '上升途中', description: '向水面游去，准备换气' };
+      }
+    }
+    default:
+      return { state: '游动中', description: '在海中自由游动' };
+  }
+};
 
 export interface EnvironmentObject {
   id: string;
@@ -44,6 +103,11 @@ export const creatures: CreatureData[] = [
       behavior: '与海葵共生，具有领地意识',
       protectionLevel: '无危',
     },
+    behavior: {
+      type: 'coral-circling',
+      coralId: 'coral-2',
+      orbitRadius: 3,
+    },
   },
   {
     id: 'fish-2',
@@ -59,6 +123,9 @@ export const creatures: CreatureData[] = [
       diet: '藻类、浮游动物',
       behavior: '群居游动，白天活动频繁',
       protectionLevel: '无危',
+    },
+    behavior: {
+      type: 'default',
     },
   },
   {
@@ -76,6 +143,9 @@ export const creatures: CreatureData[] = [
       behavior: '成群活动，性格温和',
       protectionLevel: '无危',
     },
+    behavior: {
+      type: 'default',
+    },
   },
   {
     id: 'fish-4',
@@ -91,6 +161,9 @@ export const creatures: CreatureData[] = [
       behavior: '独居或小群活动',
       diet: '小型无脊椎动物',
       protectionLevel: '无危',
+    },
+    behavior: {
+      type: 'default',
     },
   },
   {
@@ -108,6 +181,9 @@ export const creatures: CreatureData[] = [
       behavior: '性情胆怯，喜欢躲藏',
       protectionLevel: '无危',
     },
+    behavior: {
+      type: 'default',
+    },
   },
   {
     id: 'fish-6',
@@ -123,6 +199,9 @@ export const creatures: CreatureData[] = [
       behavior: '幼鱼会清理其他鱼类寄生虫',
       diet: '甲壳类、软体动物',
       protectionLevel: '无危',
+    },
+    behavior: {
+      type: 'default',
     },
   },
   {
@@ -140,6 +219,11 @@ export const creatures: CreatureData[] = [
       behavior: '雌雄同体，群体中最大个体为雌性',
       protectionLevel: '无危',
     },
+    behavior: {
+      type: 'coral-circling',
+      coralId: 'coral-4',
+      orbitRadius: 2.5,
+    },
   },
   {
     id: 'fish-8',
@@ -155,6 +239,9 @@ export const creatures: CreatureData[] = [
       behavior: '大规模群游',
       diet: '浮游生物',
       protectionLevel: '无危',
+    },
+    behavior: {
+      type: 'default',
     },
   },
   {
@@ -172,6 +259,11 @@ export const creatures: CreatureData[] = [
       behavior: '性情温和，巡游范围极广',
       protectionLevel: '濒危',
     },
+    behavior: {
+      type: 'deep-cruise',
+      minDepth: -28,
+      maxDepth: -12,
+    },
   },
   {
     id: 'shark-2',
@@ -187,6 +279,11 @@ export const creatures: CreatureData[] = [
       diet: '鱼类、鱿鱼',
       behavior: '速度极快，是海洋中最快的鲨鱼之一',
       protectionLevel: '易危',
+    },
+    behavior: {
+      type: 'deep-cruise',
+      minDepth: -26,
+      maxDepth: -10,
     },
   },
   {
@@ -204,6 +301,13 @@ export const creatures: CreatureData[] = [
       behavior: '长途迁徙，回出生地产卵',
       protectionLevel: '濒危',
     },
+    behavior: {
+      type: 'surface-breathing',
+      minDepth: -25,
+      maxDepth: -2,
+      diveDuration: 15,
+      surfaceDuration: 3,
+    },
   },
   {
     id: 'turtle-2',
@@ -219,6 +323,13 @@ export const creatures: CreatureData[] = [
       diet: '海绵、水母',
       behavior: '独居为主，性格凶猛',
       protectionLevel: '极危',
+    },
+    behavior: {
+      type: 'surface-breathing',
+      minDepth: -22,
+      maxDepth: -3,
+      diveDuration: 18,
+      surfaceDuration: 4,
     },
   },
   {
@@ -236,6 +347,9 @@ export const creatures: CreatureData[] = [
       behavior: '随洋流漂浮，群体庞大',
       protectionLevel: '无危',
     },
+    behavior: {
+      type: 'default',
+    },
   },
   {
     id: 'jelly-2',
@@ -251,6 +365,9 @@ export const creatures: CreatureData[] = [
       diet: '微型浮游生物',
       behavior: '古老物种，被称为水中大熊猫',
       protectionLevel: '极危',
+    },
+    behavior: {
+      type: 'default',
     },
   },
   {
@@ -268,6 +385,9 @@ export const creatures: CreatureData[] = [
       behavior: '体型最大的水母之一',
       protectionLevel: '无危',
     },
+    behavior: {
+      type: 'default',
+    },
   },
   {
     id: 'ray-1',
@@ -283,6 +403,9 @@ export const creatures: CreatureData[] = [
       diet: '浮游生物、小鱼',
       behavior: '喜欢跃出水面，智力较高',
       protectionLevel: '易危',
+    },
+    behavior: {
+      type: 'default',
     },
   },
   {
@@ -300,6 +423,9 @@ export const creatures: CreatureData[] = [
       diet: '鱼类、鱿鱼',
       protectionLevel: '无危',
     },
+    behavior: {
+      type: 'default',
+    },
   },
   {
     id: 'dolphin-2',
@@ -315,6 +441,9 @@ export const creatures: CreatureData[] = [
       diet: '中小型鱼类',
       behavior: '被誉为海上大熊猫，极为珍稀',
       protectionLevel: '极危',
+    },
+    behavior: {
+      type: 'default',
     },
   },
 ];

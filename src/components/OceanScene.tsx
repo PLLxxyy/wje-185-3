@@ -21,13 +21,15 @@ import {
   environmentObjects,
   cruiseRoute,
   CreatureInfo,
+  getBehaviorState,
+  BehaviorState,
 } from '../data/creatures';
 
 interface OceanSceneProps {
   cruiseMode: boolean;
   onDepthChange: (depth: number) => void;
   onPositionChange: (pos: [number, number, number]) => void;
-  onCreatureClick: (info: CreatureInfo) => void;
+  onCreatureClick: (info: CreatureInfo, behaviorState: BehaviorState) => void;
   onObjectClick: (name: string, description: string) => void;
 }
 
@@ -225,9 +227,9 @@ const DepthLights: React.FC = () => {
 
 /* ---- proximity detector for creatures ---- */
 const ProximityDetector: React.FC<{
-  onCreatureClick: (info: CreatureInfo) => void;
+  onCreatureClick: (info: CreatureInfo, behaviorState: BehaviorState) => void;
 }> = ({ onCreatureClick }) => {
-  const { camera } = useThree();
+  const { camera, clock } = useThree();
   const shownRef = useRef<string | null>(null);
 
   useFrame(() => {
@@ -247,12 +249,21 @@ const ProximityDetector: React.FC<{
     }
 
     if (closestCreature && closestDist < 6) {
+      const behaviorState = getBehaviorState(
+        closestCreature.behavior.type,
+        clock.elapsedTime,
+        closestCreature.speed
+      );
       if (shownRef.current !== closestCreature.id) {
         shownRef.current = closestCreature.id;
-        onCreatureClick(closestCreature.info);
+        onCreatureClick(closestCreature.info, behaviorState);
+      } else {
+        onCreatureClick(closestCreature.info, behaviorState);
       }
     } else if (closestDist > 10) {
-      shownRef.current = null;
+      if (shownRef.current !== null) {
+        shownRef.current = null;
+      }
     }
   });
 
@@ -342,42 +353,42 @@ const SceneContent: React.FC<OceanSceneProps> = ({
           case 'fish':
             return (
               <React.Fragment key={c.id}>
-                <Fish position={c.position} color={c.color} scale={c.scale} speed={c.speed} />
+                <Fish position={c.position} color={c.color} scale={c.scale} speed={c.speed} behavior={c.behavior} />
                 {Label}
               </React.Fragment>
             );
           case 'shark':
             return (
               <React.Fragment key={c.id}>
-                <Shark position={c.position} color={c.color} scale={c.scale} speed={c.speed} />
+                <Shark position={c.position} color={c.color} scale={c.scale} speed={c.speed} behavior={c.behavior} />
                 {Label}
               </React.Fragment>
             );
           case 'turtle':
             return (
               <React.Fragment key={c.id}>
-                <Turtle position={c.position} color={c.color} scale={c.scale} speed={c.speed} />
+                <Turtle position={c.position} color={c.color} scale={c.scale} speed={c.speed} behavior={c.behavior} />
                 {Label}
               </React.Fragment>
             );
           case 'jellyfish':
             return (
               <React.Fragment key={c.id}>
-                <Jellyfish position={c.position} color={c.color} scale={c.scale} speed={c.speed} />
+                <Jellyfish position={c.position} color={c.color} scale={c.scale} speed={c.speed} behavior={c.behavior} />
                 {Label}
               </React.Fragment>
             );
           case 'ray':
             return (
               <React.Fragment key={c.id}>
-                <Ray position={c.position} color={c.color} scale={c.scale} speed={c.speed} />
+                <Ray position={c.position} color={c.color} scale={c.scale} speed={c.speed} behavior={c.behavior} />
                 {Label}
               </React.Fragment>
             );
           case 'dolphin':
             return (
               <React.Fragment key={c.id}>
-                <Dolphin position={c.position} color={c.color} scale={c.scale} speed={c.speed} />
+                <Dolphin position={c.position} color={c.color} scale={c.scale} speed={c.speed} behavior={c.behavior} />
                 {Label}
               </React.Fragment>
             );

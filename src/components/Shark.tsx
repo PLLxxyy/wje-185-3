@@ -1,36 +1,57 @@
-import React, { useRef } from 'react';
+import React, { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
+import { BehaviorConfig } from '../data/creatures';
 
 interface SharkProps {
   position: [number, number, number];
   color: string;
   scale: number;
   speed: number;
+  behavior: BehaviorConfig;
 }
 
-const Shark: React.FC<SharkProps> = ({ position, color, scale, speed }) => {
+const Shark: React.FC<SharkProps> = ({ position, color, scale, speed, behavior }) => {
   const groupRef = useRef<THREE.Group>(null);
   const tailRef = useRef<THREE.Group>(null);
   const startTime = useRef(Math.random() * 100);
-  const orbitR = useRef(8 + Math.random() * 6);
   const center = useRef(new THREE.Vector3(...position));
   const phase = useRef(Math.random() * Math.PI * 2);
+
+  const minDepth = behavior.minDepth ?? -25;
+  const maxDepth = behavior.maxDepth ?? -10;
+  const cruiseRadius = useMemo(() => 12 + Math.random() * 8, []);
 
   useFrame((state) => {
     if (!groupRef.current) return;
     const t = state.clock.elapsedTime * speed * 0.2 + startTime.current;
-    const r = orbitR.current;
     const p = phase.current;
 
-    const x = center.current.x + Math.cos(t * 0.3 + p) * r;
-    const z = center.current.z + Math.sin(t * 0.3 + p) * r;
-    const y = center.current.y + Math.sin(t * 0.2) * 2;
+    let x, z, y;
+
+    if (behavior.type === 'deep-cruise') {
+      x = center.current.x + Math.cos(t * 0.15 + p) * cruiseRadius;
+      z = center.current.z + Math.sin(t * 0.15 + p) * cruiseRadius * 0.7;
+
+      const depthCycle = Math.sin(t * 0.08 + p * 0.5);
+      const depthRange = (maxDepth - minDepth) / 2;
+      const depthMid = (maxDepth + minDepth) / 2;
+      y = depthMid + depthCycle * depthRange;
+    } else {
+      const r = 8 + Math.random() * 6;
+      x = center.current.x + Math.cos(t * 0.3 + p) * r;
+      z = center.current.z + Math.sin(t * 0.3 + p) * r;
+      y = center.current.y + Math.sin(t * 0.2) * 2;
+    }
 
     groupRef.current.position.set(x, y, z);
 
-    const dx = -Math.sin(t * 0.3 + p) * r * 0.3;
-    const dz = Math.cos(t * 0.3 + p) * r * 0.3;
+    const dx = -Math.sin(t * (behavior.type === 'deep-cruise' ? 0.15 : 0.3) + p) *
+      (behavior.type === 'deep-cruise' ? cruiseRadius : 8) *
+      (behavior.type === 'deep-cruise' ? 0.15 : 0.3);
+    const dz = Math.cos(t * (behavior.type === 'deep-cruise' ? 0.15 : 0.3) + p) *
+      (behavior.type === 'deep-cruise' ? cruiseRadius * 0.7 : 8) *
+      (behavior.type === 'deep-cruise' ? 0.15 : 0.3);
     groupRef.current.rotation.y = Math.atan2(dx, dz);
     groupRef.current.rotation.z = Math.sin(t * 1.5) * 0.04;
 

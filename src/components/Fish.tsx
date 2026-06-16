@@ -1,46 +1,65 @@
-import React, { useRef } from 'react';
+import React, { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
+import { BehaviorConfig, environmentObjects } from '../data/creatures';
 
 interface FishProps {
   position: [number, number, number];
   color: string;
   scale: number;
   speed: number;
+  behavior: BehaviorConfig;
 }
 
-const Fish: React.FC<FishProps> = ({ position, color, scale, speed }) => {
+const Fish: React.FC<FishProps> = ({ position, color, scale, speed, behavior }) => {
   const groupRef = useRef<THREE.Group>(null);
   const tailRef = useRef<THREE.Mesh>(null);
   const startTime = useRef(Math.random() * 100);
-  const orbitRadius = useRef(3 + Math.random() * 5);
-  const orbitCenter = useRef(new THREE.Vector3(...position));
-  const yWobble = useRef(Math.random() * 0.5);
   const phaseOffset = useRef(Math.random() * Math.PI * 2);
+  const yWobble = useRef(Math.random() * 0.5);
+
+  const orbitCenter = useMemo(() => {
+    if (behavior.type === 'coral-circling' && behavior.coralId) {
+      const coral = environmentObjects.find((e) => e.id === behavior.coralId);
+      if (coral) {
+        return new THREE.Vector3(
+          coral.position[0],
+          coral.position[1] + 10,
+          coral.position[2]
+        );
+      }
+    }
+    return new THREE.Vector3(...position);
+  }, [behavior, position]);
+
+  const orbitRadius = useMemo(() => {
+    if (behavior.type === 'coral-circling' && behavior.orbitRadius) {
+      return behavior.orbitRadius;
+    }
+    return 3 + Math.random() * 5;
+  }, [behavior]);
 
   useFrame((state) => {
     if (!groupRef.current) return;
     const t = state.clock.elapsedTime * speed * 0.3 + startTime.current;
-    const r = orbitRadius.current;
+    const r = orbitRadius;
     const phase = phaseOffset.current;
+    const angularSpeed = behavior.type === 'coral-circling' ? 0.8 : 0.5;
 
-    /* swimming orbit */
-    const x = orbitCenter.current.x + Math.cos(t * 0.5 + phase) * r;
-    const z = orbitCenter.current.z + Math.sin(t * 0.5 + phase) * r;
-    const y = orbitCenter.current.y + Math.sin(t * 0.8) * yWobble.current;
+    const x = orbitCenter.x + Math.cos(t * angularSpeed + phase) * r;
+    const z = orbitCenter.z + Math.sin(t * angularSpeed + phase) * r;
+    const y = orbitCenter.y + Math.sin(t * 0.8) * yWobble.current +
+      (behavior.type === 'coral-circling' ? Math.sin(t * 0.4) * 0.5 : 0);
 
     groupRef.current.position.set(x, y, z);
 
-    /* face direction of movement */
-    const dx = -Math.sin(t * 0.5 + phase) * r * 0.5;
-    const dz = Math.cos(t * 0.5 + phase) * r * 0.5;
+    const dx = -Math.sin(t * angularSpeed + phase) * r * angularSpeed;
+    const dz = Math.cos(t * angularSpeed + phase) * r * angularSpeed;
     const angle = Math.atan2(dx, dz);
     groupRef.current.rotation.y = angle;
 
-    /* body sway */
     groupRef.current.rotation.z = Math.sin(t * 3) * 0.08;
 
-    /* tail swing */
     if (tailRef.current) {
       tailRef.current.rotation.y = Math.sin(t * 6) * 0.5;
     }

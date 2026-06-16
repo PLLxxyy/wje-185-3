@@ -1,15 +1,17 @@
 import React, { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
+import { BehaviorConfig } from '../data/creatures';
 
 interface RayProps {
   position: [number, number, number];
   color: string;
   scale: number;
   speed: number;
+  behavior: BehaviorConfig;
 }
 
-const Ray: React.FC<RayProps> = ({ position, color, scale, speed }) => {
+const Ray: React.FC<RayProps> = ({ position, color, scale, speed, behavior }) => {
   const groupRef = useRef<THREE.Group>(null);
   const wingRef = useRef<THREE.Group>(null);
   const startTime = useRef(Math.random() * 100);

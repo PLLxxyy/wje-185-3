@@ -3,7 +3,7 @@ import OceanScene from './components/OceanScene';
 import HUD from './components/HUD';
 import InfoCard from './components/InfoCard';
 import ControlsHint from './components/ControlsHint';
-import { CreatureInfo } from './data/creatures';
+import { CreatureInfo, BehaviorState } from './data/creatures';
 
 interface InfoCardData {
   name: string;
@@ -13,6 +13,8 @@ interface InfoCardData {
   diet?: string;
   behavior?: string;
   protectionLevel?: string;
+  currentState?: string;
+  currentStateDesc?: string;
 }
 
 const App: React.FC = () => {
@@ -33,16 +35,21 @@ const App: React.FC = () => {
     []
   );
 
-  const handleCreatureClick = useCallback((info: CreatureInfo) => {
-    setInfoCard({
-      name: info.name,
-      bodySize: info.bodySize,
-      habitat: info.habitat,
-      diet: info.diet,
-      behavior: info.behavior,
-      protectionLevel: info.protectionLevel,
-    });
-  }, []);
+  const handleCreatureClick = useCallback(
+    (info: CreatureInfo, behaviorState: BehaviorState) => {
+      setInfoCard({
+        name: info.name,
+        bodySize: info.bodySize,
+        habitat: info.habitat,
+        diet: info.diet,
+        behavior: info.behavior,
+        protectionLevel: info.protectionLevel,
+        currentState: behaviorState.state,
+        currentStateDesc: behaviorState.description,
+      });
+    },
+    []
+  );
 
   const handleObjectClick = useCallback(
     (name: string, description: string) => {
